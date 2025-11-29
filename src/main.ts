@@ -1,6 +1,7 @@
 import { Plugin, TFolder } from 'obsidian';
 import { FuzzyExplorerSettings, DEFAULT_SETTINGS, FuzzyExplorerSettingTab } from './settings';
-import { createSearchInput } from './ui/searchInput';
+import { createSearchInput, toggleSearchBar } from './ui/searchInput';
+import { createSearchButton, setSearchButtonActive } from './ui/searchButton';
 import { ExplorerFilter, FilterResult } from './logic/explorerFilter';
 import { FileExplorerView, FileItem } from './types';
 import { highlightMatches } from './ui/highlighting';
@@ -14,16 +15,19 @@ interface ExplorerState {
 
 export default class FuzzyExplorerPlugin extends Plugin {
     settings: FuzzyExplorerSettings;
-    searchInput: HTMLInputElement | null;
+    searchInput: HTMLInputElement | null = null;
+    searchContainer: HTMLElement | null = null; // NEW
+    searchButton: HTMLElement | null = null; // NEW
+    matchCountEl: HTMLElement | null = null;
+    filterLogic: ExplorerFilter;
     originalExplorerState: ExplorerState | null = null;
-    private debounceTimer: number;
-    private filterLogic: ExplorerFilter;
-    private matchCountEl: HTMLElement | null;
-    private previousFilterResults: Map<string, FilterResult> = new Map();
+    previousFilterResults: Map<string, FilterResult> = new Map();
+    debounceTimer: number;
+    isSearchVisible = false; // NEW: Track visibility state
 
     async onload() {
         await this.loadSettings();
-        this.filterLogic = new ExplorerFilter(this.settings);
+        this.filterLogic = new ExplorerFilter(this.app, this.settings);
 
         this.app.workspace.onLayoutReady(() => {
             this.initSearchUI();
@@ -51,30 +55,61 @@ export default class FuzzyExplorerPlugin extends Plugin {
             return;
         }
 
-        const container = explorer.containerEl.querySelector('.nav-buttons-container');
-        if (!container) {
-            console.error('Fuzzy Explorer: Could not find file explorer button container.');
+        const navButtonsContainer = explorer.containerEl.querySelector('.nav-buttons-container');
+        if (!navButtonsContainer || !navButtonsContainer.parentElement) {
+            console.error('Fuzzy Explorer: Could not find file explorer button container or its parent.');
             return;
         }
 
-        const searchInputContainer = createSearchInput(container as HTMLElement);
-        this.searchInput = searchInputContainer.querySelector('input');
-        this.matchCountEl = searchInputContainer.querySelector('.fuzzy-match-count');
+        // STEP 1: Create search button (visible icon)
+        this.searchButton = createSearchButton(
+            navButtonsContainer as HTMLElement,
+            () => this.toggleSearch()
+        );
+
+        // STEP 2: Create search input container (hidden by default)
+        const searchUIElements = createSearchInput(navButtonsContainer.parentElement as HTMLElement);
+        this.searchContainer = searchUIElements.container;
+        this.searchInput = searchUIElements.input;
+        this.matchCountEl = searchUIElements.matchCountEl;
 
         if (!this.searchInput) {
             console.error('Fuzzy Explorer: Search input element not found.');
             return;
         }
 
+        // STEP 3: Register input event
         this.registerDomEvent(this.searchInput, 'input', (evt) => {
             this.onSearchInput((evt.target as HTMLInputElement).value);
         });
 
-        const clearBtn = searchInputContainer.querySelector('.fuzzy-explorer-clear-btn');
+        // STEP 4: Register clear button event
+        const clearBtn = this.searchContainer.querySelector('.fuzzy-explorer-clear-btn');
         if (clearBtn) {
             this.registerDomEvent(clearBtn as HTMLElement, 'click', () => {
                 this.clearFilter();
             });
+        }
+
+        // STEP 5: Add keyboard shortcut to close search (Escape key)
+        this.registerDomEvent(this.searchInput, 'keydown', (evt) => {
+            if (evt.key === 'Escape') {
+                this.toggleSearch(); // Close search
+                evt.preventDefault();
+            }
+        });
+    }
+
+    // NEW: Toggle search bar visibility
+    toggleSearch(): void {
+        if (!this.searchContainer || !this.searchButton) return;
+
+        this.isSearchVisible = toggleSearchBar(this.searchContainer);
+        setSearchButtonActive(this.searchButton, this.isSearchVisible);
+
+        // If hiding search, clear the filter
+        if (!this.isSearchVisible && this.searchInput) {
+            this.clearFilter();
         }
     }
 
@@ -138,6 +173,7 @@ export default class FuzzyExplorerPlugin extends Plugin {
 
     clearFilter(): void {
         if (!this.searchInput) return;
+		if (this.searchInput.value === '') return;
 
         const explorer = this.getFileExplorer();
         if (!explorer) return;
@@ -156,6 +192,10 @@ export default class FuzzyExplorerPlugin extends Plugin {
         this.searchInput.value = '';
         this.updateMatchCount(0);
         this.previousFilterResults.clear();
+		const clearBtn = this.searchContainer?.querySelector('.fuzzy-explorer-clear-btn');
+        if (clearBtn) {
+            (clearBtn as HTMLElement).style.display = 'none';
+        }
     }
 
     updateMatchCount(count: number): void {

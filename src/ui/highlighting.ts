@@ -3,17 +3,17 @@ export function highlightMatches(
     element: HTMLElement,
     text: string,
     pattern: string,
-    caseSensitive: boolean = false
+    caseSensitive = false
 ): void {
     if (!pattern) {
         element.innerText = text;
         return;
     }
 
-    let a = caseSensitive ? text : text.toLowerCase();
-    let b = caseSensitive ? pattern : pattern.toLowerCase();
+    const a = caseSensitive ? text : text.toLowerCase();
+    const b = caseSensitive ? pattern : pattern.toLowerCase();
 
-    let indices = [];
+    const indices = [];
     let patternIdx = 0;
     let textIdx = 0;
 

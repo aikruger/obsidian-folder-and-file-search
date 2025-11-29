@@ -11,6 +11,7 @@
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     font-size: 13px;
+    background-color: var(--background-primary);
 }
 
 .fuzzy-explorer-clear-btn {
@@ -62,4 +63,35 @@
     font-size: 11px;
     color: var(--text-muted);
     text-align: center;
+}
+/* Search button styling */
+.nav-action-button.is-active {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+/* Search container - hidden state */
+.fuzzy-explorer-search-container.fuzzy-search-hidden {
+    display: none !important;
+}
+
+/* Search container - visible state */
+.fuzzy-explorer-search-container {
+    position: relative;
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    /* Smooth transition when appearing */
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

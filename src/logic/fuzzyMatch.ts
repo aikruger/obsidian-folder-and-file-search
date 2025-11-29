@@ -1,4 +1,4 @@
-export function fuzzyMatch(str: string, pattern: string, caseSensitive: boolean = false): boolean {
+export function fuzzyMatch(str: string, pattern: string, caseSensitive = false): boolean {
     if (!pattern) return true;
     if (!str) return false;
 

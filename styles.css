@@ -3,6 +3,11 @@
     position: relative;
     padding: 8px;
     border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    /* Smooth transition when appearing */
+    animation: fadeIn 0.2s ease-in;
+    /* Performance hint for animations */
+    will-change: opacity, transform;
 }
 
 .fuzzy-explorer-search-input {
@@ -36,6 +41,10 @@
     margin-left: 4px;
     font-size: 10px;
     opacity: 0.7;
+    /* Prevent layout changes */
+    contain: layout style;
+    /* Use transform instead of position for better performance */
+    transform: translateZ(0);
 }
 
 .fuzzy-match-indicator.folder-match {
@@ -50,11 +59,18 @@
 .fuzzy-match-highlight {
     background-color: var(--text-selection);
     font-weight: 600;
+    /* Isolate paint operations */
+    contain: paint;
 }
 
 /* Hidden items */
 .fuzzy-explorer-hidden {
     display: none !important;
+}
+
+/* Visible state - explicit for clarity */
+.fuzzy-explorer-visible {
+    display: block;
 }
 
 /* Match count */
@@ -75,14 +91,9 @@
     display: none !important;
 }
 
-/* Search container - visible state */
-.fuzzy-explorer-search-container {
-    position: relative;
-    padding: 8px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    background-color: var(--background-primary);
-    /* Smooth transition when appearing */
-    animation: fadeIn 0.2s ease-in;
+/* Remove will-change after animation completes */
+.fuzzy-explorer-search-container.animation-complete {
+    will-change: auto;
 }
 
 @keyframes fadeIn {
@@ -94,4 +105,45 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ============================================
+   PERFORMANCE-OPTIMIZED VISIBILITY CLASSES
+   ============================================ */
+
+/* Performance optimization: Use 'contain' property */
+.nav-file-title,
+.nav-folder-title {
+    /* Isolate layout, style, and paint for better scrolling */
+    contain: layout style paint;
+}
+
+/* GPU acceleration and scrolling optimization */
+.nav-files-container {
+    /* Use native scrolling optimization */
+    overflow-y: auto;
+    /* Enable momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Hint browser about scroll optimization */
+    will-change: scroll-position;
+    /* Use GPU for scrolling and hardware acceleration */
+    transform: translate3d(0, 0, 0);
+}
+
+
+/* Optimize individual file items */
+.tree-item {
+    /* Isolate layout calculations */
+    contain: layout style;
+    /* Prevent layout thrashing */
+    will-change: transform;
+}
+
+/* Hidden items should not affect layout */
+.fuzzy-explorer-hidden {
+    display: none !important;
+    /* Completely remove from layout calculations */
+    visibility: hidden;
+    /* Prevent any rendering */
+    pointer-events: none;
 }

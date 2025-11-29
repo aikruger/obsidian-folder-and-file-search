@@ -1,16 +1,21 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import FuzzyExplorerPlugin from './main';
+import { clearHighlightCache } from './ui/highlighting';
 
 export interface FuzzyExplorerSettings {
     caseSensitive: boolean;
     showMatchCount: boolean;
     highlightMatches: boolean;
+    enableVirtualScrolling: boolean;
+    renderChunkSize: number;
 }
 
 export const DEFAULT_SETTINGS: FuzzyExplorerSettings = {
     caseSensitive: false,
     showMatchCount: true,
     highlightMatches: true,
+    enableVirtualScrolling: true,
+    renderChunkSize: 50
 };
 
 export class FuzzyExplorerSettingTab extends PluginSettingTab {
@@ -35,6 +40,7 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.caseSensitive = value;
                     await this.plugin.saveSettings();
+                    clearHighlightCache(); // Clear cache
                     if (this.plugin.searchInput) {
                         this.plugin.applyFilter(this.plugin.searchInput.value);
                     }
@@ -58,6 +64,7 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.highlightMatches = value;
                     await this.plugin.saveSettings();
+                    clearHighlightCache(); // Clear cache
                     if (this.plugin.searchInput) {
                         this.plugin.applyFilter(this.plugin.searchInput.value);
                     }

@@ -1,8 +1,65 @@
-/*
+/* Search container */
+.fuzzy-explorer-search-container {
+    position: relative;
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.fuzzy-explorer-search-input {
+    width: 100%;
+    padding: 6px 28px 6px 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    font-size: 13px;
+}
 
-If your plugin does not need CSS, delete this file.
+.fuzzy-explorer-clear-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.5;
+}
 
-*/
+.fuzzy-explorer-clear-btn:hover {
+    opacity: 1;
+}
+
+/* Match indicators */
+.fuzzy-match-indicator {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.fuzzy-match-indicator.folder-match {
+    color: var(--text-success);
+}
+
+.fuzzy-match-indicator.contains-match {
+    color: var(--text-muted);
+}
+
+/* Highlight matching characters */
+.fuzzy-match-highlight {
+    background-color: var(--text-selection);
+    font-weight: 600;
+}
+
+/* Hidden items */
+.fuzzy-explorer-hidden {
+    display: none !important;
+}
+
+/* Match count */
+.fuzzy-match-count {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+}

@@ -1,11 +1,14 @@
-/* Search container */
-.fuzzy-explorer-search-container {
-    position: relative;
-    padding: 8px;
-    border-bottom: 1px solid var(--background-modifier-border);
+/* Scope all styles to the custom view */
+.fuzzy-explorer-view .fuzzy-explorer-search-container {
+  position: relative;
+  padding: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  animation: fadeIn 0.2s ease-in;
+  will-change: opacity, transform;
 }
 
-.fuzzy-explorer-search-input {
+.fuzzy-explorer-view .fuzzy-explorer-search-input {
     width: 100%;
     padding: 6px 28px 6px 8px;
     border: 1px solid var(--background-modifier-border);
@@ -14,7 +17,7 @@
     background-color: var(--background-primary);
 }
 
-.fuzzy-explorer-clear-btn {
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn {
     position: absolute;
     right: 16px;
     top: 50%;
@@ -26,63 +29,52 @@
     opacity: 0.5;
 }
 
-.fuzzy-explorer-clear-btn:hover {
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover {
     opacity: 1;
 }
 
-/* Match indicators */
-.fuzzy-match-indicator {
+.fuzzy-explorer-view .fuzzy-match-indicator {
     display: inline-block;
     margin-left: 4px;
     font-size: 10px;
     opacity: 0.7;
 }
 
-.fuzzy-match-indicator.folder-match {
+.fuzzy-explorer-view .fuzzy-match-indicator.folder-match {
     color: var(--text-success);
 }
 
-.fuzzy-match-indicator.contains-match {
+.fuzzy-explorer-view .fuzzy-match-indicator.contains-match {
     color: var(--text-muted);
 }
 
-/* Highlight matching characters */
-.fuzzy-match-highlight {
+.fuzzy-explorer-view .fuzzy-match-highlight {
     background-color: var(--text-selection);
     font-weight: 600;
 }
 
-/* Hidden items */
-.fuzzy-explorer-hidden {
-    display: none !important;
+.fuzzy-explorer-view .fuzzy-explorer-hidden {
+  display: none !important;
 }
 
-/* Match count */
-.fuzzy-match-count {
+.fuzzy-explorer-view .fuzzy-explorer-visible {
+  display: block;
+}
+
+.fuzzy-explorer-view .fuzzy-match-count {
     padding: 4px 8px;
     font-size: 11px;
     color: var(--text-muted);
     text-align: center;
 }
-/* Search button styling */
-.nav-action-button.is-active {
+
+.fuzzy-explorer-view .nav-action-button.is-active {
     background-color: var(--background-modifier-hover);
     color: var(--text-accent);
 }
 
-/* Search container - hidden state */
-.fuzzy-explorer-search-container.fuzzy-search-hidden {
+.fuzzy-explorer-view .fuzzy-explorer-search-container.fuzzy-search-hidden {
     display: none !important;
-}
-
-/* Search container - visible state */
-.fuzzy-explorer-search-container {
-    position: relative;
-    padding: 8px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    background-color: var(--background-primary);
-    /* Smooth transition when appearing */
-    animation: fadeIn 0.2s ease-in;
 }
 
 @keyframes fadeIn {

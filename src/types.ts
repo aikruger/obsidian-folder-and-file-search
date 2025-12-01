@@ -1,15 +1,15 @@
-import { View, TFile, TFolder } from 'obsidian';
+import { View, TAbstractFile } from 'obsidian';
 
-// This is an unofficial interface for the file explorer view
-// It is subject to change in future Obsidian updates
+// For referencing the native file explorer
 export interface FileExplorerView extends View {
-    fileItems: { [key: string]: FileItem };
-    containerEl: HTMLElement;
+  fileItems: Record<string, any>; // This is a simplified type for the native explorer's items
+  containerEl: HTMLElement;
 }
 
+// For our independent file tree
 export interface FileItem {
-    el: HTMLElement;
-    file: TFile | TFolder;
-    collapsed?: boolean;
-    collapsible?: boolean;
+  el: HTMLElement;
+  file: TAbstractFile;
+  collapsed?: boolean;
+  childrenEl?: HTMLElement;
 }

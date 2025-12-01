@@ -35,9 +35,9 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.caseSensitive = value;
                     await this.plugin.saveSettings();
-                    if (this.plugin.searchInput) {
-                        this.plugin.applyFilter(this.plugin.searchInput.value);
-                    }
+                    // if (this.plugin.searchInput) {
+                    //     this.plugin.applyFilter(this.plugin.searchInput.value);
+                    // }
                 }));
 
         new Setting(containerEl)
@@ -58,9 +58,9 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.highlightMatches = value;
                     await this.plugin.saveSettings();
-                    if (this.plugin.searchInput) {
-                        this.plugin.applyFilter(this.plugin.searchInput.value);
-                    }
+                    // if (this.plugin.searchInput) {
+                    //     this.plugin.applyFilter(this.plugin.searchInput.value);
+                    // }
                 }));
     }
 }

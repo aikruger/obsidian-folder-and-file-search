@@ -7,10 +7,10 @@ export class ErrorHandler {
 
         new Notice('Error applying filter. Check console for details.');
 
-        try {
-            plugin.clearFilter();
-        } catch (clearError) {
-            console.error('Failed to clear filter after error:', clearError);
-        }
+        // try {
+        //     plugin.clearFilter();
+        // } catch (clearError) {
+        //     console.error('Failed to clear filter after error:', clearError);
+        // }
     }
 }

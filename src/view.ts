@@ -7,7 +7,6 @@ import { createSearchInput, toggleSearchBar } from './ui/searchInput';
 import { FilterResult } from './logic/explorerFilter';
 import { ErrorHandler } from './utils/errorHandler';
 import { highlightMatches } from './ui/highlighting';
-import { addMatchIndicator, removeMatchIndicator } from './ui/matchIndicators';
 
 export class FuzzyExplorerView extends ItemView {
     plugin: FuzzyExplorerPlugin;
@@ -35,7 +34,7 @@ export class FuzzyExplorerView extends ItemView {
     }
 
     getIcon(): string {
-        return "folder";
+        return "folder-search";
     }
 
     async onOpen(): Promise<void> {
@@ -190,7 +189,6 @@ export class FuzzyExplorerView extends ItemView {
         this.searchInput.value = '';
         for (const fileItem of this.fileItems.values()) {
             this.showFileItem(fileItem);
-            removeMatchIndicator(fileItem);
         }
         this.updateMatchCount(0);
         this.previousFilterResults.clear();
@@ -227,11 +225,7 @@ export class FuzzyExplorerView extends ItemView {
             nameEl.innerText = fileName;
         }
 
-        if (result && result.matchType !== 'none' && result.matchType !== 'file_match') {
-            addMatchIndicator(fileItem, result.matchType);
-        } else {
-            removeMatchIndicator(fileItem);
-        }
+        // No indicator logic needed anymore
     }
 
 
@@ -342,12 +336,26 @@ export class FuzzyExplorerView extends ItemView {
     private onDragStart(evt: DragEvent, file: TAbstractFile) {
         if (!evt.dataTransfer) return;
 
-        // Match native explorer: use vault path and type hints
-        evt.dataTransfer.setData("text/plain", file.path);
-        evt.dataTransfer.setData("application/obsidian-file", file.path);
+        // Convert file path to wikilink format
+        let wikilink = "";
+
+        if (file instanceof TFile) {
+            // Remove .md extension for markdown files
+            const displayName = file.basename;
+            const wikiText = `[[${displayName}]]`;
+            wikilink = wikiText;
+        } else if (file instanceof TFolder) {
+            // For folders, just use folder name
+            wikilink = `[[${file.name}]]`;
+        }
+
+        // Set wikilink as the primary drag data
+        evt.dataTransfer.setData("text/plain", wikilink);
+        evt.dataTransfer.setData("text/html", wikilink);
+        evt.dataTransfer.setData("application/obsidian-file", file.path); // Keep for Obsidian internal use
 
         // Optional: effect
-        evt.dataTransfer.effectAllowed = "copyMove";
+        evt.dataTransfer.effectAllowed = "copy";
 
         // Add CSS state
         const target = evt.currentTarget as HTMLElement;

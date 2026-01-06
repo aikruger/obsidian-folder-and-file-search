@@ -1,17 +1,8 @@
 import { FileItem } from '../types';
 
 export function addMatchIndicator(fileItem: FileItem, matchType: 'folder_match' | 'contains_match'): void {
-    removeMatchIndicator(fileItem); // Ensure no duplicate indicators
-
-    const indicator = fileItem.el.createDiv('fuzzy-match-indicator');
-
-    if (matchType === 'folder_match') {
-        indicator.setText('✓');
-        indicator.addClass('folder-match');
-    } else {
-        indicator.setText('→');
-        indicator.addClass('contains-match');
-    }
+    // Removed visual indicators - no ticks or arrows
+    removeMatchIndicator(fileItem);
 }
 
 export function removeMatchIndicator(fileItem: FileItem): void {

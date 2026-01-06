@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { Plugin, addIcon } from 'obsidian';
 import { FuzzyExplorerSettings, DEFAULT_SETTINGS, FuzzyExplorerSettingTab } from './settings';
 import { ExplorerFilter } from './logic/explorerFilter';
 import { FuzzyExplorerView } from './view';
@@ -11,21 +11,36 @@ export default class FuzzyExplorerPlugin extends Plugin {
     async onload() {
         await this.loadSettings();
 
+        // Register the custom folder-search icon
+        const folderSearchSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100" height="100">
+  <!-- Folder shape -->
+  <path d="M56 8H28L22 2H8C4.6 2 2 4.6 2 8v48c0 3.4 2.6 6 6 6h48c3.4 0 6-2.6 6-6V14c0-3.4-2.6-6-6-6z"
+        fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Search circle -->
+  <circle cx="44" cy="42" r="10" fill="none" stroke="currentColor" stroke-width="3"/>
+
+  <!-- Search line (magnifying glass handle) -->
+  <line x1="52" y1="50" x2="60" y2="58" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
+
+        addIcon("folder-search", folderSearchSvg);
+
         // Register the custom view type
         this.registerView(
             FUZZY_EXPLORER_VIEW_TYPE,
             (leaf) => new FuzzyExplorerView(leaf, this)
         );
 
-        // Register ribbon icon to open the view
-        this.addRibbonIcon("folder", "Open Fuzzy Explorer", () => {
-            this.activateFuzzyExplorer();
+        // Register ribbon icon to open the view (Always opens new instance on left)
+        this.addRibbonIcon("folder-search", "Open Fuzzy Explorer", () => {
+            this.activateFuzzyExplorerNewLeaf("left");
         });
 
-        // Add command to open the view (default/existing behavior)
+        // Add command to open the view (Toggle first instance)
         this.addCommand({
-            id: "open-fuzzy-explorer",
-            name: "Open Fuzzy Explorer",
+            id: "toggle-fuzzy-explorer",
+            name: "Toggle Fuzzy Explorer (first instance)",
             callback: () => {
                 this.activateFuzzyExplorer();
             }

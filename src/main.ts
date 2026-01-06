@@ -18,17 +18,35 @@ export default class FuzzyExplorerPlugin extends Plugin {
         );
 
         // Register ribbon icon to open the view
-        this.addRibbonIcon("search", "Open Fuzzy Explorer", () => {
+        this.addRibbonIcon("folder", "Open Fuzzy Explorer", () => {
             this.activateFuzzyExplorer();
         });
 
-        // Add command to open the view
+        // Add command to open the view (default/existing behavior)
         this.addCommand({
             id: "open-fuzzy-explorer",
             name: "Open Fuzzy Explorer",
             callback: () => {
                 this.activateFuzzyExplorer();
             }
+        });
+
+        this.addCommand({
+            id: "open-fuzzy-explorer-left",
+            name: "Open Fuzzy Explorer (new, left)",
+            callback: () => this.activateFuzzyExplorerNewLeaf("left"),
+        });
+
+        this.addCommand({
+            id: "open-fuzzy-explorer-right",
+            name: "Open Fuzzy Explorer (new, right)",
+            callback: () => this.activateFuzzyExplorerNewLeaf("right"),
+        });
+
+        this.addCommand({
+            id: "open-fuzzy-explorer-split",
+            name: "Open Fuzzy Explorer (new split)",
+            callback: () => this.activateFuzzyExplorerNewLeaf("split"),
         });
 
         // Initialize other components
@@ -52,14 +70,27 @@ export default class FuzzyExplorerPlugin extends Plugin {
             return;
         }
 
-        const leaf = this.app.workspace.getLeftLeaf(false);
-        if (leaf) {
-            await leaf.setViewState({
-                type: FUZZY_EXPLORER_VIEW_TYPE,
-                active: true,
-            });
+        await this.activateFuzzyExplorerNewLeaf("left");
+    }
 
-            this.app.workspace.revealLeaf(leaf);
+    async activateFuzzyExplorerNewLeaf(location: "left" | "right" | "split" = "left") {
+        let leaf;
+
+        if (location === "left") {
+            leaf = this.app.workspace.getLeftLeaf(true);
+        } else if (location === "right") {
+            leaf = this.app.workspace.getRightLeaf(true);
+        } else {
+            // split current
+            leaf = this.app.workspace.getLeaf("split");
         }
+
+        if (!leaf) return;
+
+        await leaf.setViewState({
+            type: FUZZY_EXPLORER_VIEW_TYPE,
+            active: true
+        });
+        this.app.workspace.revealLeaf(leaf);
     }
 }

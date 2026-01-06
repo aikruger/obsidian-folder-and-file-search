@@ -17,7 +17,7 @@ export class FuzzyExplorerView extends ItemView {
     searchContainer: HTMLElement;
     matchCountEl: HTMLElement;
     fileItems: Map<string, FileItem>;
-    isSearchVisible: boolean = false;
+    isSearchVisible = false;
     debounceTimer: number;
     previousFilterResults: Map<string, FilterResult> = new Map();
 
@@ -35,7 +35,7 @@ export class FuzzyExplorerView extends ItemView {
     }
 
     getIcon(): string {
-        return "search";
+        return "folder";
     }
 
     async onOpen(): Promise<void> {
@@ -284,6 +284,10 @@ export class FuzzyExplorerView extends ItemView {
             childrenEl: childrenEl
         });
 
+        folderEl.setAttr("draggable", "true");
+        this.setupDragAndDrop(folderEl, folder);
+        this.setupFolderDrop(folderEl, folder);
+
         folderTitleEl.addEventListener("click", (e) => {
             e.stopPropagation();
             this.toggleFolder(folder.path);
@@ -310,6 +314,9 @@ export class FuzzyExplorerView extends ItemView {
             file: file
         });
 
+        fileEl.setAttr("draggable", "true");
+        this.setupDragAndDrop(fileEl, file);
+
         fileTitleEl.addEventListener("click", async (e) => {
             e.stopPropagation();
             await this.app.workspace.getLeaf(false).openFile(file);
@@ -319,6 +326,71 @@ export class FuzzyExplorerView extends ItemView {
             if (e.button === 1) {
                 e.stopPropagation();
                 await this.app.workspace.getLeaf('tab').openFile(file);
+            }
+        });
+    }
+
+    private setupDragAndDrop(fileItemEl: HTMLElement, file: TAbstractFile) {
+        fileItemEl.addEventListener("dragstart", (evt: DragEvent) => {
+            this.onDragStart(evt, file);
+        });
+        fileItemEl.addEventListener("dragend", (evt: DragEvent) => {
+            this.onDragEnd(evt);
+        });
+    }
+
+    private onDragStart(evt: DragEvent, file: TAbstractFile) {
+        if (!evt.dataTransfer) return;
+
+        // Match native explorer: use vault path and type hints
+        evt.dataTransfer.setData("text/plain", file.path);
+        evt.dataTransfer.setData("application/obsidian-file", file.path);
+
+        // Optional: effect
+        evt.dataTransfer.effectAllowed = "copyMove";
+
+        // Add CSS state
+        const target = evt.currentTarget as HTMLElement;
+        target.addClass("is-dragging");
+    }
+
+    private onDragEnd(evt: DragEvent) {
+        const target = evt.currentTarget as HTMLElement;
+        target?.removeClass("is-dragging");
+    }
+
+    private setupFolderDrop(folderEl: HTMLElement, folder: TFolder) {
+        folderEl.addEventListener("dragover", (evt: DragEvent) => {
+            evt.preventDefault();
+            if (evt.dataTransfer) {
+                evt.dataTransfer.dropEffect = "move";
+            }
+            folderEl.addClass("is-drop-target");
+        });
+
+        folderEl.addEventListener("dragleave", () => {
+            folderEl.removeClass("is-drop-target");
+        });
+
+        folderEl.addEventListener("drop", async (evt: DragEvent) => {
+            evt.preventDefault();
+            folderEl.removeClass("is-drop-target");
+            if (!evt.dataTransfer) return;
+
+            const path = evt.dataTransfer.getData("application/obsidian-file") ||
+                         evt.dataTransfer.getData("text/plain");
+            if (!path) return;
+
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (!file || file === folder) return;
+
+            // Moving files/folders into the folder:
+            const newPath = folder.path === "/"
+                ? `${file.name}`
+                : `${folder.path}/${file.name}`;
+
+            if (file.path !== newPath) {
+                await this.app.vault.rename(file, newPath);
             }
         });
     }

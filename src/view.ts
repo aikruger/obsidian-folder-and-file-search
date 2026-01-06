@@ -112,7 +112,7 @@ export class FuzzyExplorerView extends ItemView {
         // NEW: Add collapse all button
         const collapseAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
         collapseAllBtn.setAttribute("aria-label", "Collapse All");
-        setIcon(collapseAllBtn, "fold-gutter");  // Obsidian has a fold icon
+        setIcon(collapseAllBtn, "chevrons-up-left");
         collapseAllBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -123,7 +123,7 @@ export class FuzzyExplorerView extends ItemView {
         // NEW: Add expand all button
         const expandAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
         expandAllBtn.setAttribute("aria-label", "Expand All");
-        setIcon(expandAllBtn, "unfold-gutter");  // Obsidian has an unfold icon
+        setIcon(expandAllBtn, "chevrons-down-right");
         expandAllBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -300,7 +300,7 @@ export class FuzzyExplorerView extends ItemView {
         folderEl.setAttr("data-path", folder.path);
 
         const folderTitleEl = folderEl.createDiv("tree-item-self nav-folder-title");
-        folderTitleEl.style.paddingLeft = `${depth * 20}px`;
+        folderTitleEl.style.marginLeft = `${depth * 18}px`;
 
         const collapseIcon = folderTitleEl.createDiv("tree-item-icon collapse-icon nav-folder-collapse-indicator");
         setIcon(collapseIcon, "right-triangle");
@@ -338,7 +338,7 @@ export class FuzzyExplorerView extends ItemView {
         fileEl.setAttr("data-path", file.path);
 
         const fileTitleEl = fileEl.createDiv("tree-item-self nav-file-title");
-        fileTitleEl.style.paddingLeft = `${depth * 20}px`;
+        fileTitleEl.style.marginLeft = `${depth * 18}px`;
 
         const fileIcon = fileTitleEl.createDiv("tree-item-icon nav-file-icon");
         setIcon(fileIcon, "document");
@@ -388,17 +388,17 @@ export class FuzzyExplorerView extends ItemView {
             wikilinks.push(`[[${displayName}]]`);
 
         } else if (file instanceof TFolder) {
-            // Folder: collect ALL visible files in this folder + subfolders
+            // Folder: collect ONLY direct + nested files IN THIS FOLDER
             wikilinks = this.getWikilinksForFolder(file.path);
 
-            // If no filtered files exist, show all files in folder
+            // If no filtered files exist, get all files in this folder (no search active)
             if (wikilinks.length === 0) {
                 wikilinks = this.getAllFilesInFolder(file);
             }
         }
 
-        // Join multiple wikilinks with space
-        const wikilinkText = wikilinks.join(" ");
+        // CHANGE: Join with NEWLINES, not spaces
+        const wikilinkText = wikilinks.join("\n");
 
         evt.dataTransfer.setData("text/plain", wikilinkText);
         evt.dataTransfer.setData("text/html", wikilinkText);
@@ -409,25 +409,17 @@ export class FuzzyExplorerView extends ItemView {
         target.addClass("is-dragging");
     }
 
+    /**
+     * Get wikilinks of visible files in a SPECIFIC folder (from current search)
+     * ONLY includes files that are direct children of this folder or its subfolders
+     */
     private getWikilinksForFolder(folderPath: string): string[] {
         const wikilinks: string[] = [];
 
-        // Collect files directly visible in this folder
-        if (this.visibleFilesInFolder.has(folderPath)) {
-            const visibleFiles = this.visibleFilesInFolder.get(folderPath);
-            if (visibleFiles) {
-                for (const filePath of visibleFiles) {
-                    const file = this.app.vault.getAbstractFileByPath(filePath);
-                    if (file instanceof TFile) {
-                        wikilinks.push(`[[${file.basename}]]`);
-                    }
-                }
-            }
-        }
-
-        // Recursively collect from subfolders
+        // Only include files whose parent folder path STARTS WITH this folderPath
         for (const [fPath, visibleFiles] of this.visibleFilesInFolder) {
-            if (fPath.startsWith(folderPath + "/") && fPath !== folderPath) {
+            // Check if fPath is inside (or IS) the target folder
+            if (fPath === folderPath || fPath.startsWith(folderPath + "/")) {
                 for (const filePath of visibleFiles) {
                     const file = this.app.vault.getAbstractFileByPath(filePath);
                     if (file instanceof TFile) {
@@ -440,13 +432,21 @@ export class FuzzyExplorerView extends ItemView {
         return wikilinks;
     }
 
+    /**
+     * Get all files in a SPECIFIC folder recursively (when no search active)
+     * ONLY includes files that belong to this folder and its subfolders
+     */
     private getAllFilesInFolder(folder: TFolder): string[] {
         const wikilinks: string[] = [];
         const allFiles = this.app.vault.getAllLoadedFiles();
+        const targetPath = folder.path;
 
         for (const file of allFiles) {
-            if (file instanceof TFile && file.path.startsWith(folder.path + "/")) {
-                wikilinks.push(`[[${file.basename}]]`);
+            if (file instanceof TFile) {
+                // Only include if file's path starts with folder path
+                if (file.path.startsWith(targetPath + "/")) {
+                    wikilinks.push(`[[${file.basename}]]`);
+                }
             }
         }
 

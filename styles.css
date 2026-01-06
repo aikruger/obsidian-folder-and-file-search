@@ -19,7 +19,7 @@
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn {
     position: absolute;
-    right: 16px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -27,10 +27,21 @@
     cursor: pointer;
     padding: 4px;
     opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover {
     opacity: 1;
+}
+
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn svg {
+    width: 14px;
+    height: 14px;
 }
 
 .fuzzy-explorer-view .fuzzy-match-indicator {
@@ -108,18 +119,41 @@
     flex: 0 0 auto;
 }
 
-/* Ensure icons are visible */
+/* Fix folder/file padding to ensure icons are visible */
+.fuzzy-explorer-view .tree-item-self {
+    display: flex;
+    align-items: center;
+    padding-left: 0 !important;  /* Remove inline padding */
+    padding-right: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    gap: 2px;
+}
+
+/* Ensure proper depth indentation happens via margin, not padding */
+.fuzzy-explorer-view .tree-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Icons stay visible and fixed-width */
 .fuzzy-explorer-view .tree-item-icon {
-    min-width: 20px;
+    min-width: 18px;
+    max-width: 18px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 4px;
+    flex-shrink: 0;  /* Don't shrink icons */
+    margin-right: 2px;
 }
 
-/* Fix folder/file padding to match native */
-.fuzzy-explorer-view .tree-item-self {
-    padding-left: 4px !important;  /* Override inline styles */
+/* Collapse/expand icon specific */
+.fuzzy-explorer-view .collapse-icon {
+    min-width: 18px;
+    max-width: 18px;
+    margin-right: 4px;
 }
 
 .fuzzy-explorer-view .nav-file-title-content,

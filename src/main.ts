@@ -34,15 +34,15 @@ export default class FuzzyExplorerPlugin extends Plugin {
 
         // Register ribbon icon to open the view (Always opens new instance on left)
         this.addRibbonIcon("folder-search", "Open Fuzzy Explorer", () => {
-            this.activateFuzzyExplorerNewLeaf("left");
+            this.toggleFuzzyExplorerPanel();
         });
 
         // Add command to open the view (Toggle first instance)
         this.addCommand({
             id: "toggle-fuzzy-explorer",
-            name: "Toggle Fuzzy Explorer (first instance)",
+            name: "Toggle Fuzzy Explorer",
             callback: () => {
-                this.activateFuzzyExplorer();
+                this.toggleFuzzyExplorerPanel();
             }
         });
 
@@ -77,15 +77,27 @@ export default class FuzzyExplorerPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
-    async activateFuzzyExplorer(): Promise<void> {
-        const existing = this.app.workspace.getLeavesOfType(FUZZY_EXPLORER_VIEW_TYPE);
+    async toggleFuzzyExplorerPanel() {
+        // Check if fuzzy explorer tab already exists in left sidebar
+        const leftLeaves_all = this.app.workspace.getLeavesOfType(FUZZY_EXPLORER_VIEW_TYPE);
 
-        if (existing.length > 0) {
-            this.app.workspace.revealLeaf(existing[0]);
+        if (leftLeaves_all.length > 0) {
+            // Already open - just reveal it
+            const fuzzyLeaf = leftLeaves_all[0];
+            this.app.workspace.revealLeaf(fuzzyLeaf);
             return;
         }
 
-        await this.activateFuzzyExplorerNewLeaf("left");
+        // Not open - create in left sidebar
+        const leaf = this.app.workspace.getLeftLeaf(false);
+        if (!leaf) return;
+
+        await leaf.setViewState({
+            type: FUZZY_EXPLORER_VIEW_TYPE,
+            active: true
+        });
+
+        this.app.workspace.revealLeaf(leaf);
     }
 
     async activateFuzzyExplorerNewLeaf(location: "left" | "right" | "split" = "left") {

@@ -1,5 +1,8 @@
 /* Scope all styles to the custom view */
 .fuzzy-explorer-view .fuzzy-explorer-search-container {
+  display: flex !important; /* Switch to flexbox for "to the right" layout */
+  align-items: center;
+  gap: 6px;
   position: relative;
   padding: 8px;
   border-bottom: 1px solid var(--background-modifier-border);
@@ -9,8 +12,9 @@
 }
 
 .fuzzy-explorer-view .fuzzy-explorer-search-input {
-    width: 100%;
-    padding: 6px 30px 6px 8px; /* Increased padding-right to prevent text overlap with clear button */
+    flex: 1; /* Allow input to take available space */
+    width: auto; /* Allow flex to control width */
+    padding: 6px 8px; /* Standard padding, no extra right padding needed */
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     font-size: 13px;
@@ -18,30 +22,30 @@
 }
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn {
-    position: absolute;
-    right: 8px; /* Moved closer to the edge (was 12px) */
-    top: 50%;
-    transform: translateY(-50%);
+    position: static; /* Remove absolute positioning */
+    transform: none;
+    right: auto;
+    top: auto;
+    
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
-    opacity: 0.5;
-    display: flex;
+    padding: 4px; /* Slightly larger click area */
+    opacity: 0.7;
+    display: flex; /* Flex handles hiding via style.display in JS */
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
+    
+    /* Optional: visible background on hover for better UX outside */
+    border-radius: 4px;
 }
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover {
     opacity: 1;
-}
-
-.fuzzy-explorer-view .fuzzy-explorer-clear-btn svg {
-    width: 14px;
-    height: 14px;
+    background-color: var(--background-modifier-hover);
 }
 
 .fuzzy-explorer-view .fuzzy-match-indicator {
@@ -147,4 +151,5 @@
     height: 18px;
     display: flex !important; /* Force display to prevent themes from hiding icons */
     align-items: center;
-    justify-content: cent
+    justify-content: center;
+}

@@ -19,16 +19,21 @@ export function createSearchInput(containerEl: HTMLElement): {
 
     // CHANGE: Create clear button with icon instead of div
     const clearBtn = searchContainer.createEl('button', {
-        cls: 'fuzzy-explorer-clear-btn search-input-clear-button'
+        cls: 'fuzzy-explorer-clear-btn' // Removed 'search-input-clear-button' to prevents double icon issue
     });
     clearBtn.setAttribute("aria-label", "Clear search");
     clearBtn.style.display = "none";
 
-    // Add X icon
-    setIcon(clearBtn, "x-circle");
+    // Change: Use 'cross' icon which is standard in Obsidian for closing/clearing
+    setIcon(clearBtn, "cross");
 
+    clearBtn.style.display = 'none'; // Initially hidden
+
+    // NEW: Create match count element
     const matchCountEl = searchContainer.createDiv('fuzzy-match-count');
+    matchCountEl.style.display = 'none';
 
+    // Add event listeners
     searchInput.addEventListener('input', () => {
         clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
     });

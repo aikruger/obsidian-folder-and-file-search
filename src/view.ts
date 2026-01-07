@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFolder, TFile, setIcon, TAbstractFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFolder, TFile, setIcon, TAbstractFile, Notice } from 'obsidian';
 import FuzzyExplorerPlugin from './main';
 import { FUZZY_EXPLORER_VIEW_TYPE } from './constants';
 import { FileExplorerView, FileItem } from './types';
@@ -7,23 +7,26 @@ import { createSearchInput, toggleSearchBar } from './ui/searchInput';
 import { FilterResult } from './logic/explorerFilter';
 import { ErrorHandler } from './utils/errorHandler';
 import { highlightMatches } from './ui/highlighting';
-import { addMatchIndicator, removeMatchIndicator } from './ui/matchIndicators';
 
 export class FuzzyExplorerView extends ItemView {
     plugin: FuzzyExplorerPlugin;
     fileExplorerRef: FileExplorerView | null;
     searchButton: HTMLElement;
+    collapseAllBtn: HTMLElement;
+    expandAllBtn: HTMLElement;
     searchInput: HTMLInputElement;
     searchContainer: HTMLElement;
     matchCountEl: HTMLElement;
     fileItems: Map<string, FileItem>;
-    isSearchVisible: boolean = false;
+    isSearchVisible = false;
     debounceTimer: number;
     previousFilterResults: Map<string, FilterResult> = new Map();
+    visibleFilesInFolder: Map<string, Set<string>>;
 
     constructor(leaf: WorkspaceLeaf, plugin: FuzzyExplorerPlugin) {
         super(leaf);
         this.plugin = plugin;
+        this.visibleFilesInFolder = new Map();
     }
 
     getViewType(): string {
@@ -35,7 +38,7 @@ export class FuzzyExplorerView extends ItemView {
     }
 
     getIcon(): string {
-        return "search";
+        return "folder-search";
     }
 
     async onOpen(): Promise<void> {
@@ -106,6 +109,38 @@ export class FuzzyExplorerView extends ItemView {
             () => this.toggleSearch()
         );
 
+        // NEW: Add copy results button
+        const copyResultsBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
+        copyResultsBtn.setAttribute("aria-label", "Copy Results to Clipboard");
+        setIcon(copyResultsBtn, "copy");
+        copyResultsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.copyResultsToClipboard();
+        });
+
+        // NEW: Add collapse all button
+        const collapseAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
+        collapseAllBtn.setAttribute("aria-label", "Collapse All");
+        setIcon(collapseAllBtn, "chevrons-up");
+        collapseAllBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.collapseAll();
+        });
+        this.collapseAllBtn = collapseAllBtn;
+
+        // NEW: Add expand all button
+        const expandAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
+        expandAllBtn.setAttribute("aria-label", "Expand All");
+        setIcon(expandAllBtn, "chevrons-down");
+        expandAllBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.expandAll();
+        });
+        this.expandAllBtn = expandAllBtn;
+
         const searchUIElements = createSearchInput(container);
         this.searchContainer = searchUIElements.container;
         this.searchInput = searchUIElements.input;
@@ -164,11 +199,24 @@ export class FuzzyExplorerView extends ItemView {
                 searchTerm
             );
 
+            // NEW: Reset visible files tracking
+            this.visibleFilesInFolder.clear();
+
             let matchCount = 0;
             for (const [path, fileItem] of this.fileItems.entries()) {
                 const result = newFilterResults.get(path);
                 if (result && result.shouldShow) {
                     this.showFileItem(fileItem, searchTerm, result);
+
+                    // NEW: Track visible files in each folder
+                    if (fileItem.file instanceof TFile) {
+                        const folderPath = fileItem.file.parent?.path || "/";
+                        if (!this.visibleFilesInFolder.has(folderPath)) {
+                            this.visibleFilesInFolder.set(folderPath, new Set());
+                        }
+                        this.visibleFilesInFolder.get(folderPath)?.add(fileItem.file.path);
+                    }
+
                     if (result.matchType === 'file_match' || result.matchType === 'folder_match') {
                         matchCount++;
                     }
@@ -190,8 +238,11 @@ export class FuzzyExplorerView extends ItemView {
         this.searchInput.value = '';
         for (const fileItem of this.fileItems.values()) {
             this.showFileItem(fileItem);
-            removeMatchIndicator(fileItem);
         }
+
+        // NEW: Clear visible files tracking
+        this.visibleFilesInFolder.clear();
+
         this.updateMatchCount(0);
         this.previousFilterResults.clear();
         const clearBtn = this.searchContainer?.querySelector('.fuzzy-explorer-clear-btn');
@@ -227,11 +278,7 @@ export class FuzzyExplorerView extends ItemView {
             nameEl.innerText = fileName;
         }
 
-        if (result && result.matchType !== 'none' && result.matchType !== 'file_match') {
-            addMatchIndicator(fileItem, result.matchType);
-        } else {
-            removeMatchIndicator(fileItem);
-        }
+        // No indicator logic needed anymore
     }
 
 
@@ -263,7 +310,9 @@ export class FuzzyExplorerView extends ItemView {
         folderEl.setAttr("data-path", folder.path);
 
         const folderTitleEl = folderEl.createDiv("tree-item-self nav-folder-title");
-        folderTitleEl.style.paddingLeft = `${depth * 20}px`;
+        // CHANGE: Use paddingLeft instead of marginLeft for better hover/layout behavior
+        // Added 6px base padding to prevent root items from being cut off
+        folderTitleEl.style.paddingLeft = `${depth * 18 + 6}px`;
 
         const collapseIcon = folderTitleEl.createDiv("tree-item-icon collapse-icon nav-folder-collapse-indicator");
         setIcon(collapseIcon, "right-triangle");
@@ -284,6 +333,10 @@ export class FuzzyExplorerView extends ItemView {
             childrenEl: childrenEl
         });
 
+        folderEl.setAttr("draggable", "true");
+        this.setupDragAndDrop(folderEl, folder);
+        this.setupFolderDrop(folderEl, folder);
+
         folderTitleEl.addEventListener("click", (e) => {
             e.stopPropagation();
             this.toggleFolder(folder.path);
@@ -297,7 +350,9 @@ export class FuzzyExplorerView extends ItemView {
         fileEl.setAttr("data-path", file.path);
 
         const fileTitleEl = fileEl.createDiv("tree-item-self nav-file-title");
-        fileTitleEl.style.paddingLeft = `${depth * 20}px`;
+        // CHANGE: Use paddingLeft instead of marginLeft
+        // Added 6px base padding
+        fileTitleEl.style.paddingLeft = `${depth * 18 + 6}px`;
 
         const fileIcon = fileTitleEl.createDiv("tree-item-icon nav-file-icon");
         setIcon(fileIcon, "document");
@@ -310,6 +365,9 @@ export class FuzzyExplorerView extends ItemView {
             file: file
         });
 
+        fileEl.setAttr("draggable", "true");
+        this.setupDragAndDrop(fileEl, file);
+
         fileTitleEl.addEventListener("click", async (e) => {
             e.stopPropagation();
             await this.app.workspace.getLeaf(false).openFile(file);
@@ -319,6 +377,144 @@ export class FuzzyExplorerView extends ItemView {
             if (e.button === 1) {
                 e.stopPropagation();
                 await this.app.workspace.getLeaf('tab').openFile(file);
+            }
+        });
+    }
+
+    private setupDragAndDrop(fileItemEl: HTMLElement, file: TAbstractFile) {
+        fileItemEl.addEventListener("dragstart", (evt: DragEvent) => {
+            this.onDragStart(evt, file);
+        });
+        fileItemEl.addEventListener("dragend", (evt: DragEvent) => {
+            this.onDragEnd(evt);
+        });
+    }
+
+    private onDragStart(evt: DragEvent, file: TAbstractFile) {
+        if (!evt.dataTransfer)
+            return;
+
+        // STOP PROPAGATION: Prevent event from bubbling to parent folders
+        // causing them to overwrite the drag data with the whole folder's content
+        evt.stopPropagation();
+
+        let wikilinks: string[] = [];
+
+        if (file instanceof TFile) {
+            // Single file: just its wikilink
+            const displayName = file.basename;
+            wikilinks.push(`[[${displayName}]]`);
+
+        } else if (file instanceof TFolder) {
+            // Check if search is active
+            const isSearchActive = this.searchInput && this.searchInput.value.length > 0;
+
+            if (isSearchActive) {
+                // Search ACTIVE: Collect only VISIBLE files in this folder/subfolders
+                wikilinks = this.getWikilinksForFolder(file.path);
+            } else {
+                // Search INACTIVE: Collect ALL files in this folder/subfolders
+                wikilinks = this.getAllFilesInFolder(file);
+            }
+        }
+
+        // CHANGE: Join with NEWLINES for plain text
+        const wikilinkText = wikilinks.join("\n");
+        // CHANGE: Create HTML version with <br> to ensure newlines in rich text editors
+        const wikilinkHtml = wikilinks.join("<br>");
+
+        evt.dataTransfer.setData("text/plain", wikilinkText);
+        evt.dataTransfer.setData("text/html", wikilinkHtml);
+        evt.dataTransfer.setData("application/obsidian-file", file.path);
+        evt.dataTransfer.effectAllowed = "copy";
+
+        const target = evt.currentTarget as HTMLElement;
+        target.addClass("is-dragging");
+    }
+
+    /**
+     * Get wikilinks of visible files in a SPECIFIC folder (from current search)
+     * ONLY includes files that are direct children of this folder or its subfolders
+     */
+    private getWikilinksForFolder(folderPath: string): string[] {
+        const wikilinks: string[] = [];
+
+        // Only include files whose parent folder path STARTS WITH this folderPath
+        for (const [fPath, visibleFiles] of this.visibleFilesInFolder) {
+            // Check if fPath is inside (or IS) the target folder
+            // Handle root folder special case: "/" should match everything
+            if (folderPath === "/" || fPath === folderPath || fPath.startsWith(folderPath + "/")) {
+                for (const filePath of visibleFiles) {
+                    const file = this.app.vault.getAbstractFileByPath(filePath);
+                    if (file instanceof TFile) {
+                        wikilinks.push(`[[${file.basename}]]`);
+                    }
+                }
+            }
+        }
+
+        return wikilinks;
+    }
+
+    /**
+     * Get all files in a SPECIFIC folder recursively (when no search active)
+     * ONLY includes files that belong to this folder and its subfolders
+     */
+    private getAllFilesInFolder(folder: TFolder): string[] {
+        const wikilinks: string[] = [];
+        const allFiles = this.app.vault.getAllLoadedFiles();
+        const targetPath = folder.path;
+
+        for (const file of allFiles) {
+            if (file instanceof TFile) {
+                // Only include if file's path starts with folder path
+                // Handle root folder special case: "/" should match everything
+                if (targetPath === "/" || file.path.startsWith(targetPath + "/")) {
+                    wikilinks.push(`[[${file.basename}]]`);
+                }
+            }
+        }
+
+        return wikilinks;
+    }
+
+    private onDragEnd(evt: DragEvent) {
+        const target = evt.currentTarget as HTMLElement;
+        target?.removeClass("is-dragging");
+    }
+
+    private setupFolderDrop(folderEl: HTMLElement, folder: TFolder) {
+        folderEl.addEventListener("dragover", (evt: DragEvent) => {
+            evt.preventDefault();
+            if (evt.dataTransfer) {
+                evt.dataTransfer.dropEffect = "move";
+            }
+            folderEl.addClass("is-drop-target");
+        });
+
+        folderEl.addEventListener("dragleave", () => {
+            folderEl.removeClass("is-drop-target");
+        });
+
+        folderEl.addEventListener("drop", async (evt: DragEvent) => {
+            evt.preventDefault();
+            folderEl.removeClass("is-drop-target");
+            if (!evt.dataTransfer) return;
+
+            const path = evt.dataTransfer.getData("application/obsidian-file") ||
+                         evt.dataTransfer.getData("text/plain");
+            if (!path) return;
+
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (!file || file === folder) return;
+
+            // Moving files/folders into the folder:
+            const newPath = folder.path === "/"
+                ? `${file.name}`
+                : `${folder.path}/${file.name}`;
+
+            if (file.path !== newPath) {
+                await this.app.vault.rename(file, newPath);
             }
         });
     }
@@ -341,5 +537,115 @@ export class FuzzyExplorerView extends ItemView {
             collapseIcon.empty();
             setIcon(collapseIcon as HTMLElement, item.collapsed ? "right-triangle" : "down-triangle");
         }
+    }
+
+    /**
+     * Collapse all visible folders
+     */
+    collapseAll(): void {
+        for (const fileItem of this.fileItems.values()) {
+            if (fileItem.childrenEl && fileItem.file instanceof TFolder) {
+                // Collapse the folder
+                fileItem.collapsed = true;
+                fileItem.childrenEl.style.display = "none";
+                fileItem.el.removeClass("is-collapsed");
+
+                // Update collapse icon
+                const collapseIcon = fileItem.el.querySelector(".collapse-icon");
+                if (collapseIcon) {
+                    collapseIcon.empty();
+                    setIcon(collapseIcon as HTMLElement, "right-triangle");
+                }
+            }
+        }
+    }
+
+    /**
+     * Expand all visible folders
+     */
+    expandAll(): void {
+        for (const fileItem of this.fileItems.values()) {
+            if (fileItem.childrenEl && fileItem.file instanceof TFolder) {
+                // Expand the folder
+                fileItem.collapsed = false;
+                fileItem.childrenEl.style.display = "";
+                fileItem.el.addClass("is-collapsed");
+
+                // Update collapse icon
+                const collapseIcon = fileItem.el.querySelector(".collapse-icon");
+                if (collapseIcon) {
+                    collapseIcon.empty();
+                    setIcon(collapseIcon as HTMLElement, "down-triangle");
+                }
+            }
+        }
+    }
+
+    async copyResultsToClipboard(): Promise<void> {
+        // Collect all visible files first
+        const visibleFiles: TFile[] = [];
+        
+        // Helper to collect visible files recursively
+        const collectFiles = (folder: TFolder) => {
+            for (const child of folder.children) {
+                const item = this.fileItems.get(child.path);
+                if (!item || item.el.hasClass('fuzzy-explorer-hidden')) continue;
+                
+                if (child instanceof TFile) {
+                    visibleFiles.push(child);
+                } else if (child instanceof TFolder) {
+                    collectFiles(child);
+                }
+            }
+        };
+
+        collectFiles(this.app.vault.getRoot());
+
+        if (visibleFiles.length === 0) {
+            new Notice("No results to copy");
+            return;
+        }
+
+        // Group files by parent folder
+        const filesByFolder = new Map<string, TFile[]>();
+        
+        for (const file of visibleFiles) {
+            // Get folder path - default to "/" for root files if parent is root or null
+            const parentPath = file.parent ? (file.parent.path === "/" ? "/" : file.parent.path) : "/";
+            
+            if (!filesByFolder.has(parentPath)) {
+                filesByFolder.set(parentPath, []);
+            }
+            filesByFolder.get(parentPath)?.push(file);
+        }
+
+        // Sort folders alphabetically
+        const sortedFolders = Array.from(filesByFolder.keys()).sort((a, b) => {
+            if (a === "/") return -1;
+            if (b === "/") return 1;
+            return a.localeCompare(b);
+        });
+
+        const lines: string[] = [];
+
+        // Build Markdown output
+        for (const folderPath of sortedFolders) {
+            // Heading for folder
+            lines.push(`## ${folderPath}`);
+            
+            // Files in this folder
+            const files = filesByFolder.get(folderPath) || [];
+            // Sort files alphabetically
+            files.sort((a, b) => a.basename.localeCompare(b.basename));
+            
+            for (const file of files) {
+                lines.push(`[[${file.basename}]]`);
+            }
+            // Add empty line between groups
+            lines.push(""); 
+        }
+
+        await navigator.clipboard.writeText(lines.join("\n").trim());
+        new Notice("Search results copied to clipboard");
     }
 }

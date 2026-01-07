@@ -10,7 +10,7 @@
 
 .fuzzy-explorer-view .fuzzy-explorer-search-input {
     width: 100%;
-    padding: 6px 28px 6px 8px;
+    padding: 6px 30px 6px 8px; /* Increased padding-right to prevent text overlap with clear button */
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     font-size: 13px;
@@ -19,7 +19,7 @@
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn {
     position: absolute;
-    right: 16px;
+    right: 8px; /* Moved closer to the edge (was 12px) */
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -27,25 +27,25 @@
     cursor: pointer;
     padding: 4px;
     opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover {
     opacity: 1;
 }
 
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
 .fuzzy-explorer-view .fuzzy-match-indicator {
-    display: inline-block;
-    margin-left: 4px;
-    font-size: 10px;
-    opacity: 0.7;
-}
-
-.fuzzy-explorer-view .fuzzy-match-indicator.folder-match {
-    color: var(--text-success);
-}
-
-.fuzzy-explorer-view .fuzzy-match-indicator.contains-match {
-    color: var(--text-muted);
+    display: none !important;  /* Hide all indicators */
 }
 
 .fuzzy-explorer-view .fuzzy-match-highlight {
@@ -87,3 +87,64 @@
         transform: translateY(0);
     }
 }
+
+/* Drag and Drop Visuals */
+.is-dragging {
+    opacity: 0.5;
+}
+
+.is-drop-target {
+    background-color: var(--background-modifier-hover);
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+}
+
+/* Fix for fuzzy-explorer-view to match native explorer layout */
+.fuzzy-explorer-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.fuzzy-explorer-view .nav-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    gap: 4px;
+}
+
+.fuzzy-explorer-view .nav-buttons-container {
+    display: flex;
+    gap: 0;
+    flex: 0 0 auto;
+}
+
+/* Fix folder/file padding to ensure icons are visible */
+.fuzzy-explorer-view .tree-item-self {
+    display: flex;
+    align-items: center;
+    /* padding-left: 0 !important; Removed to allow inline padding for indentation */
+    padding-right: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    gap: 2px;
+    margin-left: 0 !important; /* Prevent negative margins from themes */
+}
+
+/* Ensure proper depth indentation happens via margin, not padding */
+.fuzzy-explorer-view .tree-item {
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important; /* Reset margin to prevent theme interference */
+    padding: 0 !important;
+}
+
+/* Icons stay visible and fixed-width */
+.fuzzy-explorer-view .tree-item-icon {
+    min-width: 18px;
+    max-width: 18px;
+    width: 18px;
+    height: 18px;
+    display: flex !important; /* Force display to prevent themes from hiding icons */
+    align-items: center;
+    justify-content: cent

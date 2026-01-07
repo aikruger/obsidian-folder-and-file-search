@@ -1,3 +1,5 @@
+import { setIcon } from 'obsidian';
+
 export function createSearchInput(containerEl: HTMLElement): {
     container: HTMLElement;
     input: HTMLInputElement;
@@ -15,17 +17,21 @@ export function createSearchInput(containerEl: HTMLElement): {
         cls: 'fuzzy-explorer-search-input'
     });
 
-    const clearBtn = searchContainer.createEl('div', {
+    // CHANGE: Create clear button with icon instead of div
+    const clearBtn = searchContainer.createEl('button', {
         cls: 'fuzzy-explorer-clear-btn search-input-clear-button'
     });
+    clearBtn.setAttribute("aria-label", "Clear search");
+    clearBtn.style.display = "none";
+
+    // Add X icon
+    setIcon(clearBtn, "x-circle");
 
     const matchCountEl = searchContainer.createDiv('fuzzy-match-count');
 
     searchInput.addEventListener('input', () => {
-        clearBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+        clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
     });
-
-    clearBtn.style.display = 'none';
 
     return {
         container: searchContainer,

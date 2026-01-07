@@ -1,62 +1,55 @@
-# Fuzzy Explorer Filter for Obsidian
+# Obsidian Fuzzy Explorer
 
-This plugin adds a powerful, Notion-style fuzzy search filter to the Obsidian file explorer. It allows you to quickly find files and folders by dynamically filtering the explorer view as you type.
-
-<!-- TODO: Add a GIF demonstrating the plugin's functionality -->
+Fuzzy Explorer is an Obsidian plugin that provides an independent file explorer view with a built-in fuzzy search filter. It allows you to search and filter your vault's files and folders quickly and efficiently, while maintaining the familiar hierarchical tree structure.
 
 ## Features
 
-- **Fuzzy Search**: Quickly find files and folders with a fuzzy matching algorithm.
-- **Advanced Query Syntax**: Use operators like `file:`, `path:`, `tag:`, and `-` for precise filtering.
-- **Highlighting**: Matches in the file and folder names are highlighted.
-- **Match Indicators**: Icons indicate why a file or folder is shown (e.g., a file inside a matching folder).
-- **Customizable Settings**: Adjust the search behavior to your liking.
+- **Independent File Explorer:** Runs as a separate view, allowing you to keep your native file explorer open or hidden.
+- **Fuzzy Search:** Filter files and folders using fuzzy matching logic.
+- **Drag & Drop:** Fully supports drag and drop operations, behaving like the native explorer. Move files and folders around with ease.
+- **Multiple Instances:** Open multiple independent Fuzzy Explorer instances in different panes (left, right, or split).
+- **Customizable:** Option to change the view icon to a custom folder icon.
+- **Highlighting:** Matches are highlighted in the file tree for better visibility.
+- **Vault Sync:** Automatically updates when files are created, deleted, or renamed in your vault.
 
 ## How to Use
 
-1. **Open the search bar**: Click the search icon in the file explorer's navigation bar.
-2. **Start typing**: The file explorer will filter as you type.
-3. **Use advanced queries**: Use the syntax below to perform more advanced searches.
+1.  **Open Fuzzy Explorer:**
+    - Click the folder icon in the left ribbon (toggles the first instance).
+    - Use the command palette (`Ctrl/Cmd + P`) and search for "Open Fuzzy Explorer".
+    - Use "Open Fuzzy Explorer (new, left/right/split)" commands to open additional instances.
 
-### Advanced Query Syntax
+2.  **Search:**
+    - Type in the search bar at the top of the view to filter files.
+    - Use operators like `path:`, `file:`, `tag:`, `-folder:`, `"..."` (exact phrase), and `/.../` (regex).
 
-| Syntax | Description | Example |
-|---|---|---|
-| `term` | Fuzzy search for a term in file or folder names. | `report` |
-| `"exact phrase"` | Search for an exact phrase. | `"meeting notes"` |
-| `file:term` | Fuzzy search for a term in file names only. | `file:report` |
-| `-file:term` | Exclude files with a term in their name. | `-file:draft` |
-| `path:term` | Fuzzy search for a term in the file or folder path. | `path:Projects` |
-| `-path:term` | Exclude files and folders in a specific path. | `-path:Archive` |
-| `folder:term` | Alias for `path:`. | `folder:Projects` |
-| `-folder:term` | Exclude a specific folder. | `-folder:Templates` |
-| `tag:#tagname` | Include files with a specific tag. | `tag:#important` |
-| `-tag:#tagname` | Exclude files with a specific tag. | `-tag:#personal` |
-| `/regex/` | Search with a regular expression. | `/[0-9]{4}-[0-9]{2}-[0-9]{2}/` |
-
-You can combine these operators to create complex queries. For example, `report path:Projects -folder:Archive` will find all files with "report" in their name, located in the "Projects" folder, but not in the "Archive" folder.
-
-## Settings
-
-- **Case Sensitive Search**: Toggle whether the search is case-sensitive.
-- **Highlight Matches**: Toggle whether to highlight matching characters in the search results.
-- **Show Match Count**: Toggle whether to show the number of matching files and folders.
+3.  **Drag & Drop:**
+    - Drag files or folders from the Fuzzy Explorer to other panes, the editor, or the native file explorer.
+    - Drop files into folders within the Fuzzy Explorer to move them.
 
 ## Installation
 
-1. Open **Settings** in Obsidian.
-2. Go to **Community plugins**.
-3. Make sure **Restricted mode** is turned off.
-4. Click **Browse** and search for "Fuzzy Explorer Filter".
-5. Click **Install**.
-6. Once it's installed, click **Enable**.
+1.  Search for "Fuzzy Explorer" in the Obsidian Community Plugins settings.
+2.  Click "Install" and then "Enable".
 
-## Contributing
+## Manual Installation
 
-## Contributing
+1.  Download the latest release from the GitHub releases page.
+2.  Extract the files (`main.js`, `styles.css`, `manifest.json`) into your vault's plugin folder: `.obsidian/plugins/obsidian-fuzzy-explorer/`.
+3.  Reload Obsidian.
 
-Contributions are welcome! Please feel free to open an issue or submit a pull request on the GitHub repository. <!-- TODO: Add a link to the GitHub repository -->
+## Development
+
+- Clone this repo.
+- Run `npm install` to install dependencies.
+- Run `npm run dev` to start compilation in watch mode.
+
+## Custom Icon
+
+To use a custom icon for the view (e.g., from Flaticon):
+1.  Place your SVG file in `plugins/obsidian-fuzzy-explorer/assets/fuzzy-folder.svg`.
+2.  The plugin is pre-configured to look for this file and override the default icon.
 
 ## License
 
-This plugin is licensed under the [MIT License](LICENSE).
+MIT

@@ -10,7 +10,7 @@
 
 .fuzzy-explorer-view .fuzzy-explorer-search-input {
     width: 100%;
-    padding: 6px 28px 6px 8px;
+    padding: 6px 30px 6px 8px; /* Increased padding-right to prevent text overlap with clear button */
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     font-size: 13px;
@@ -19,7 +19,7 @@
 
 .fuzzy-explorer-view .fuzzy-explorer-clear-btn {
     position: absolute;
-    right: 12px;
+    right: 8px; /* Moved closer to the edge (was 12px) */
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -123,17 +123,20 @@
 .fuzzy-explorer-view .tree-item-self {
     display: flex;
     align-items: center;
-    padding-left: 0 !important;  /* Remove inline padding */
+    /* padding-left: 0 !important; Removed to allow inline padding for indentation */
     padding-right: 4px;
     padding-top: 2px;
     padding-bottom: 2px;
     gap: 2px;
+    margin-left: 0 !important; /* Prevent negative margins from themes */
 }
 
 /* Ensure proper depth indentation happens via margin, not padding */
 .fuzzy-explorer-view .tree-item {
     display: flex;
     flex-direction: column;
+    margin: 0 !important; /* Reset margin to prevent theme interference */
+    padding: 0 !important;
 }
 
 /* Icons stay visible and fixed-width */
@@ -142,31 +145,6 @@
     max-width: 18px;
     width: 18px;
     height: 18px;
-    display: flex;
+    display: flex !important; /* Force display to prevent themes from hiding icons */
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;  /* Don't shrink icons */
-    margin-right: 2px;
-}
-
-/* Collapse/expand icon specific */
-.fuzzy-explorer-view .collapse-icon {
-    min-width: 18px;
-    max-width: 18px;
-    margin-right: 4px;
-}
-
-.fuzzy-explorer-view .nav-file-title-content,
-.fuzzy-explorer-view .nav-folder-title-content {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Files container */
-.fuzzy-explorer-view .nav-files-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 0;
-}
+    justify-content: cent

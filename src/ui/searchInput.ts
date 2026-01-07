@@ -25,7 +25,7 @@ export function createSearchInput(containerEl: HTMLElement): {
     clearBtn.style.display = "none";
 
     // Add X icon
-    setIcon(clearBtn, "x");
+    setIcon(clearBtn, "x-circle");
 
     const matchCountEl = searchContainer.createDiv('fuzzy-match-count');
 

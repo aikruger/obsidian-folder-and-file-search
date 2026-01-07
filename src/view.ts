@@ -112,7 +112,7 @@ export class FuzzyExplorerView extends ItemView {
         // NEW: Add collapse all button
         const collapseAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
         collapseAllBtn.setAttribute("aria-label", "Collapse All");
-        setIcon(collapseAllBtn, "chevrons-up-left");
+        setIcon(collapseAllBtn, "chevrons-up");
         collapseAllBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -123,7 +123,7 @@ export class FuzzyExplorerView extends ItemView {
         // NEW: Add expand all button
         const expandAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
         expandAllBtn.setAttribute("aria-label", "Expand All");
-        setIcon(expandAllBtn, "chevrons-down-right");
+        setIcon(expandAllBtn, "chevrons-down");
         expandAllBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -300,7 +300,9 @@ export class FuzzyExplorerView extends ItemView {
         folderEl.setAttr("data-path", folder.path);
 
         const folderTitleEl = folderEl.createDiv("tree-item-self nav-folder-title");
-        folderTitleEl.style.marginLeft = `${depth * 18}px`;
+        // CHANGE: Use paddingLeft instead of marginLeft for better hover/layout behavior
+        // Added 6px base padding to prevent root items from being cut off
+        folderTitleEl.style.paddingLeft = `${depth * 18 + 6}px`;
 
         const collapseIcon = folderTitleEl.createDiv("tree-item-icon collapse-icon nav-folder-collapse-indicator");
         setIcon(collapseIcon, "right-triangle");
@@ -338,7 +340,9 @@ export class FuzzyExplorerView extends ItemView {
         fileEl.setAttr("data-path", file.path);
 
         const fileTitleEl = fileEl.createDiv("tree-item-self nav-file-title");
-        fileTitleEl.style.marginLeft = `${depth * 18}px`;
+        // CHANGE: Use paddingLeft instead of marginLeft
+        // Added 6px base padding
+        fileTitleEl.style.paddingLeft = `${depth * 18 + 6}px`;
 
         const fileIcon = fileTitleEl.createDiv("tree-item-icon nav-file-icon");
         setIcon(fileIcon, "document");
@@ -380,6 +384,10 @@ export class FuzzyExplorerView extends ItemView {
         if (!evt.dataTransfer)
             return;
 
+        // STOP PROPAGATION: Prevent event from bubbling to parent folders
+        // causing them to overwrite the drag data with the whole folder's content
+        evt.stopPropagation();
+
         let wikilinks: string[] = [];
 
         if (file instanceof TFile) {
@@ -388,20 +396,25 @@ export class FuzzyExplorerView extends ItemView {
             wikilinks.push(`[[${displayName}]]`);
 
         } else if (file instanceof TFolder) {
-            // Folder: collect ONLY direct + nested files IN THIS FOLDER
-            wikilinks = this.getWikilinksForFolder(file.path);
+            // Check if search is active
+            const isSearchActive = this.searchInput && this.searchInput.value.length > 0;
 
-            // If no filtered files exist, get all files in this folder (no search active)
-            if (wikilinks.length === 0) {
+            if (isSearchActive) {
+                // Search ACTIVE: Collect only VISIBLE files in this folder/subfolders
+                wikilinks = this.getWikilinksForFolder(file.path);
+            } else {
+                // Search INACTIVE: Collect ALL files in this folder/subfolders
                 wikilinks = this.getAllFilesInFolder(file);
             }
         }
 
-        // CHANGE: Join with NEWLINES, not spaces
+        // CHANGE: Join with NEWLINES for plain text
         const wikilinkText = wikilinks.join("\n");
+        // CHANGE: Create HTML version with <br> to ensure newlines in rich text editors
+        const wikilinkHtml = wikilinks.join("<br>");
 
         evt.dataTransfer.setData("text/plain", wikilinkText);
-        evt.dataTransfer.setData("text/html", wikilinkText);
+        evt.dataTransfer.setData("text/html", wikilinkHtml);
         evt.dataTransfer.setData("application/obsidian-file", file.path);
         evt.dataTransfer.effectAllowed = "copy";
 
@@ -419,7 +432,8 @@ export class FuzzyExplorerView extends ItemView {
         // Only include files whose parent folder path STARTS WITH this folderPath
         for (const [fPath, visibleFiles] of this.visibleFilesInFolder) {
             // Check if fPath is inside (or IS) the target folder
-            if (fPath === folderPath || fPath.startsWith(folderPath + "/")) {
+            // Handle root folder special case: "/" should match everything
+            if (folderPath === "/" || fPath === folderPath || fPath.startsWith(folderPath + "/")) {
                 for (const filePath of visibleFiles) {
                     const file = this.app.vault.getAbstractFileByPath(filePath);
                     if (file instanceof TFile) {
@@ -444,7 +458,8 @@ export class FuzzyExplorerView extends ItemView {
         for (const file of allFiles) {
             if (file instanceof TFile) {
                 // Only include if file's path starts with folder path
-                if (file.path.startsWith(targetPath + "/")) {
+                // Handle root folder special case: "/" should match everything
+                if (targetPath === "/" || file.path.startsWith(targetPath + "/")) {
                     wikilinks.push(`[[${file.basename}]]`);
                 }
             }

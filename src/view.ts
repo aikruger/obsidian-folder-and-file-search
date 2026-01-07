@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFolder, TFile, setIcon, TAbstractFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFolder, TFile, setIcon, TAbstractFile, Notice } from 'obsidian';
 import FuzzyExplorerPlugin from './main';
 import { FUZZY_EXPLORER_VIEW_TYPE } from './constants';
 import { FileExplorerView, FileItem } from './types';
@@ -108,6 +108,16 @@ export class FuzzyExplorerView extends ItemView {
             buttonsContainer,
             () => this.toggleSearch()
         );
+
+        // NEW: Add copy results button
+        const copyResultsBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
+        copyResultsBtn.setAttribute("aria-label", "Copy Results to Clipboard");
+        setIcon(copyResultsBtn, "copy");
+        copyResultsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.copyResultsToClipboard();
+        });
 
         // NEW: Add collapse all button
         const collapseAllBtn = buttonsContainer.createDiv("clickable-icon nav-action-button");
@@ -569,5 +579,73 @@ export class FuzzyExplorerView extends ItemView {
                 }
             }
         }
+    }
+
+    async copyResultsToClipboard(): Promise<void> {
+        // Collect all visible files first
+        const visibleFiles: TFile[] = [];
+        
+        // Helper to collect visible files recursively
+        const collectFiles = (folder: TFolder) => {
+            for (const child of folder.children) {
+                const item = this.fileItems.get(child.path);
+                if (!item || item.el.hasClass('fuzzy-explorer-hidden')) continue;
+                
+                if (child instanceof TFile) {
+                    visibleFiles.push(child);
+                } else if (child instanceof TFolder) {
+                    collectFiles(child);
+                }
+            }
+        };
+
+        collectFiles(this.app.vault.getRoot());
+
+        if (visibleFiles.length === 0) {
+            new Notice("No results to copy");
+            return;
+        }
+
+        // Group files by parent folder
+        const filesByFolder = new Map<string, TFile[]>();
+        
+        for (const file of visibleFiles) {
+            // Get folder path - default to "/" for root files if parent is root or null
+            const parentPath = file.parent ? (file.parent.path === "/" ? "/" : file.parent.path) : "/";
+            
+            if (!filesByFolder.has(parentPath)) {
+                filesByFolder.set(parentPath, []);
+            }
+            filesByFolder.get(parentPath)?.push(file);
+        }
+
+        // Sort folders alphabetically
+        const sortedFolders = Array.from(filesByFolder.keys()).sort((a, b) => {
+            if (a === "/") return -1;
+            if (b === "/") return 1;
+            return a.localeCompare(b);
+        });
+
+        const lines: string[] = [];
+
+        // Build Markdown output
+        for (const folderPath of sortedFolders) {
+            // Heading for folder
+            lines.push(`## ${folderPath}`);
+            
+            // Files in this folder
+            const files = filesByFolder.get(folderPath) || [];
+            // Sort files alphabetically
+            files.sort((a, b) => a.basename.localeCompare(b.basename));
+            
+            for (const file of files) {
+                lines.push(`[[${file.basename}]]`);
+            }
+            // Add empty line between groups
+            lines.push(""); 
+        }
+
+        await navigator.clipboard.writeText(lines.join("\n").trim());
+        new Notice("Search results copied to clipboard");
     }
 }

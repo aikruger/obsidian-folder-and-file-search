@@ -26,7 +26,8 @@ export class NativeSearchInstance {
 
     injectUI() {
         // Inject Search Button into Header
-        const header = this.view.headerDom;
+        // Look for header inside the containerEl
+        const header = this.view.containerEl.querySelector('.nav-header') as HTMLElement;
         if (header) {
             let buttonsContainer = header.querySelector('.nav-buttons-container') as HTMLElement;
             if (!buttonsContainer) {

@@ -1,5 +1,6 @@
 /* Scope all styles to the custom view */
-.fuzzy-explorer-view .fuzzy-explorer-search-container {
+.fuzzy-explorer-view .fuzzy-explorer-search-container,
+.native-fuzzy-search-container.fuzzy-explorer-search-container {
   display: flex !important; /* Switch to flexbox for "to the right" layout */
   align-items: center;
   gap: 6px;
@@ -11,7 +12,8 @@
   will-change: opacity, transform;
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-search-input {
+.fuzzy-explorer-view .fuzzy-explorer-search-input,
+.native-fuzzy-search-container .fuzzy-explorer-search-input {
     flex: 1; /* Allow input to take available space */
     width: auto; /* Allow flex to control width */
     padding: 6px 8px; /* Standard padding, no extra right padding needed */
@@ -21,7 +23,8 @@
     background-color: var(--background-primary);
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-clear-btn {
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn,
+.native-fuzzy-search-container .fuzzy-explorer-clear-btn {
     position: static; /* Remove absolute positioning */
     transform: none;
     right: auto;
@@ -43,41 +46,46 @@
     border-radius: 4px;
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover {
+.fuzzy-explorer-view .fuzzy-explorer-clear-btn:hover,
+.native-fuzzy-search-container .fuzzy-explorer-clear-btn:hover {
     opacity: 1;
     background-color: var(--background-modifier-hover);
 }
 
-.fuzzy-explorer-view .fuzzy-match-indicator {
+/* Global utility classes for both views */
+.fuzzy-match-indicator {
     display: none !important;  /* Hide all indicators */
 }
 
-.fuzzy-explorer-view .fuzzy-match-highlight {
+.fuzzy-match-highlight {
     background-color: var(--text-selection);
     font-weight: 600;
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-hidden {
+.fuzzy-explorer-hidden {
   display: none !important;
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-visible {
-  display: block;
+.fuzzy-explorer-visible {
+  /* display: block; removed to allow default display */
 }
 
-.fuzzy-explorer-view .fuzzy-match-count {
+/* Match count */
+.fuzzy-explorer-view .fuzzy-match-count,
+.native-fuzzy-search-container .fuzzy-match-count {
     padding: 4px 8px;
     font-size: 11px;
     color: var(--text-muted);
     text-align: center;
 }
 
-.fuzzy-explorer-view .nav-action-button.is-active {
+.fuzzy-explorer-view .nav-action-button.is-active,
+.nav-buttons-container .native-fuzzy-search-btn.is-active {
     background-color: var(--background-modifier-hover);
     color: var(--text-accent);
 }
 
-.fuzzy-explorer-view .fuzzy-explorer-search-container.fuzzy-search-hidden {
+.fuzzy-explorer-search-container.fuzzy-search-hidden {
     display: none !important;
 }
 

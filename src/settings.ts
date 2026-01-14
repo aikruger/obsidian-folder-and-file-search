@@ -5,12 +5,14 @@ export interface FuzzyExplorerSettings {
     caseSensitive: boolean;
     showMatchCount: boolean;
     highlightMatches: boolean;
+    enableNativeSearch: boolean;
 }
 
 export const DEFAULT_SETTINGS: FuzzyExplorerSettings = {
     caseSensitive: false,
     showMatchCount: true,
     highlightMatches: true,
+    enableNativeSearch: false,
 };
 
 export class FuzzyExplorerSettingTab extends PluginSettingTab {
@@ -28,6 +30,18 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
         containerEl.createEl('h2', { text: 'Fuzzy Explorer Settings' });
 
         new Setting(containerEl)
+            .setName('Enable Native Explorer Search')
+            .setDesc('Add fuzzy search functionality to the native Obsidian file explorer.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableNativeSearch)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableNativeSearch = value;
+                    await this.plugin.saveSettings();
+                    // Trigger update in main plugin
+                    this.plugin.onEnableNativeSearchChange();
+                }));
+
+        new Setting(containerEl)
             .setName('Case sensitive search')
             .setDesc('Enable case-sensitive fuzzy matching')
             .addToggle(toggle => toggle
@@ -35,9 +49,6 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.caseSensitive = value;
                     await this.plugin.saveSettings();
-                    // if (this.plugin.searchInput) {
-                    //     this.plugin.applyFilter(this.plugin.searchInput.value);
-                    // }
                 }));
 
         new Setting(containerEl)
@@ -58,9 +69,6 @@ export class FuzzyExplorerSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.highlightMatches = value;
                     await this.plugin.saveSettings();
-                    // if (this.plugin.searchInput) {
-                    //     this.plugin.applyFilter(this.plugin.searchInput.value);
-                    // }
                 }));
     }
 }

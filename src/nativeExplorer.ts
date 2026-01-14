@@ -128,27 +128,38 @@ export class NativeSearchInstance {
             return;
         }
 
-        const results = this.plugin.filterLogic.buildFilterResults(this.plugin.app.vault, searchTerm);
-        let matchCount = 0;
-        const items = this.view.fileItems;
+        // Suspend observer to prevent infinite loop
+        if (this.mutationObserver) this.mutationObserver.disconnect();
 
-        for (const path in items) {
-            const item = items[path];
-            if (!item || !item.el) continue;
+        try {
+            const results = this.plugin.filterLogic.buildFilterResults(this.plugin.app.vault, searchTerm);
+            let matchCount = 0;
+            const items = this.view.fileItems;
 
-            const result = results.get(path);
+            for (const path in items) {
+                const item = items[path];
+                if (!item || !item.el) continue;
 
-            if (result && result.shouldShow) {
-                this.showItem(item, searchTerm, result);
-                if (result.matchType === 'file_match' || result.matchType === 'folder_match') {
-                    matchCount++;
+                const result = results.get(path);
+
+                if (result && result.shouldShow) {
+                    this.showItem(item, searchTerm, result);
+                    if (result.matchType === 'file_match' || result.matchType === 'folder_match') {
+                        matchCount++;
+                    }
+                } else {
+                    this.hideItem(item);
                 }
-            } else {
-                this.hideItem(item);
+            }
+
+            this.updateMatchCount(matchCount);
+        } finally {
+            // Re-observe
+            const filesContainer = this.view.containerEl.querySelector('.nav-files-container');
+            if (this.mutationObserver && filesContainer) {
+                 this.mutationObserver.observe(filesContainer, { childList: true, subtree: true });
             }
         }
-
-        this.updateMatchCount(matchCount);
     }
 
     clearFilter() {

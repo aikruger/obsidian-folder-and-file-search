@@ -1,12 +1,15 @@
-import { Plugin, addIcon } from 'obsidian';
+import { Plugin, addIcon, View } from 'obsidian';
 import { FuzzyExplorerSettings, DEFAULT_SETTINGS, FuzzyExplorerSettingTab } from './settings';
 import { ExplorerFilter } from './logic/explorerFilter';
 import { FuzzyExplorerView } from './view';
 import { FUZZY_EXPLORER_VIEW_TYPE } from './constants';
+import { NativeSearchManager } from './nativeExplorer';
+import { FileExplorerView } from './types';
 
 export default class FuzzyExplorerPlugin extends Plugin {
     settings: FuzzyExplorerSettings;
     filterLogic: ExplorerFilter;
+    nativeSearchManager: NativeSearchManager;
 
     async onload() {
         await this.loadSettings();
@@ -67,6 +70,49 @@ export default class FuzzyExplorerPlugin extends Plugin {
         // Initialize other components
         this.filterLogic = new ExplorerFilter(this.app, this.settings);
         this.addSettingTab(new FuzzyExplorerSettingTab(this.app, this));
+
+        // Initialize Native Search Manager
+        this.nativeSearchManager = new NativeSearchManager(this);
+
+        // Add command to toggle native search
+        this.addCommand({
+            id: "toggle-native-search",
+            name: "Search in Native Explorer",
+            checkCallback: (checking: boolean) => {
+                // 1. Try active view first
+                const activeView = this.app.workspace.getActiveViewOfType(View);
+                if (activeView && activeView.getViewType() === 'file-explorer') {
+                    if (!checking) {
+                        this.nativeSearchManager.toggleSearch(activeView as FileExplorerView);
+                    }
+                    return true;
+                }
+
+                // 2. Fallback: Find any file explorer leaf (useful if focus is in editor)
+                const leaves = this.app.workspace.getLeavesOfType('file-explorer');
+                if (leaves.length > 0) {
+                    if (!checking) {
+                        const view = leaves[0].view as FileExplorerView;
+                        this.nativeSearchManager.toggleSearch(view);
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+        });
+
+        if (this.settings.enableNativeSearch) {
+            this.app.workspace.onLayoutReady(() => {
+                this.nativeSearchManager.enable();
+            });
+        }
+    }
+
+    onunload() {
+        if (this.nativeSearchManager) {
+            this.nativeSearchManager.disable();
+        }
     }
 
     async loadSettings() {
@@ -75,6 +121,14 @@ export default class FuzzyExplorerPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+
+    onEnableNativeSearchChange() {
+        if (this.settings.enableNativeSearch) {
+            this.nativeSearchManager.enable();
+        } else {
+            this.nativeSearchManager.disable();
+        }
     }
 
     async toggleFuzzyExplorerPanel() {
